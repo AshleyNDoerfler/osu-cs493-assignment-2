@@ -1,9 +1,10 @@
 const router = require('express').Router();
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
 
-const businesses = require('../data/businesses');
-const { reviews } = require('./reviews');
-const { photos } = require('./photos');
+// const businesses = require('../data/businesses');
+// const { reviews } = require('./reviews');
+// const { photos } = require('./photos');
+const { getCollection, ObjectId } = require('../lib/mongo');
 
 exports.router = router;
 exports.businesses = businesses;
@@ -28,12 +29,13 @@ const businessSchema = {
 /*
  * Route to return a list of businesses.
  */
-router.get('/', function (req, res) {
+router.get('/', async function (req, res) {
 
   /*
    * Compute page number based on optional query string parameter `page`.
    * Make sure page is within allowed bounds.
    */
+  const businesses = await getCollection('businesses').find().toArray();
   let page = parseInt(req.query.page) || 1;
   const numPerPage = 10;
   const lastPage = Math.ceil(businesses.length / numPerPage);
@@ -78,15 +80,16 @@ router.get('/', function (req, res) {
 /*
  * Route to create a new business.
  */
-router.post('/', function (req, res, next) {
+router.post('/', async function (req, res, next) {
+  const businesses = await getCollection('businesses').find().toArray();
   if (validateAgainstSchema(req.body, businessSchema)) {
     const business = extractValidFields(req.body, businessSchema);
     business.id = businesses.length;
-    businesses.push(business);
+    const updated_business = await getCollection('businesses').insertOne(business);
     res.status(201).json({
       id: business.id,
       links: {
-        business: `/businesses/${business.id}`
+        business: `/businesses/${business.id}`// TODO?
       }
     });
   } else {
@@ -99,19 +102,16 @@ router.post('/', function (req, res, next) {
 /*
  * Route to fetch info about a specific business.
  */
-router.get('/:businessid', function (req, res, next) {
-  const businessid = parseInt(req.params.businessid);
-  if (businesses[businessid]) {
+router.get('/:businessid', async function (req, res, next) {
+  const businessid = new ObjectId(req.params.businessid);
+  const business = await getCollection('businesses').findOne({_id: businessid});
+
+  if (business) {
     /*
      * Find all reviews and photos for the specified business and create a
      * new object containing all of the business data, including reviews and
      * photos.
      */
-    const business = {
-      reviews: reviews.filter(review => review && review.businessid === businessid),
-      photos: photos.filter(photo => photo && photo.businessid === businessid)
-    };
-    Object.assign(business, businesses[businessid]);
     res.status(200).json(business);
   } else {
     next();
@@ -121,36 +121,38 @@ router.get('/:businessid', function (req, res, next) {
 /*
  * Route to replace data for a business.
  */
-router.put('/:businessid', function (req, res, next) {
-  const businessid = parseInt(req.params.businessid);
-  if (businesses[businessid]) {
+router.put('/:businessid', async function (req, res, next) {
+  const businessid = new ObjectId(req.params.businessid);
 
-    if (validateAgainstSchema(req.body, businessSchema)) {
-      businesses[businessid] = extractValidFields(req.body, businessSchema);
-      businesses[businessid].id = businessid;
+  if (validateAgainstSchema(req.body, businessSchema)) {
+    const business = extractValidFields(req.body, businessSchema);
+    const updated_business = await getCollection('businesses').replaceOne({_id: businessid}, business);
+     
+    if(updated_business.matchedCount > 0){
       res.status(200).json({
         links: {
-          business: `/businesses/${businessid}`
+          business: `/businesses/${businessid}` // TODO?
         }
       });
-    } else {
-      res.status(400).json({
-        error: "Request body is not a valid business object"
-      });
+    } 
+    else {
+      next();
     }
-
   } else {
-    next();
+    res.status(400).json({
+      error: "Request body is not a valid business object"
+    });
   }
 });
 
 /*
  * Route to delete a business.
  */
-router.delete('/:businessid', function (req, res, next) {
-  const businessid = parseInt(req.params.businessid);
-  if (businesses[businessid]) {
-    businesses[businessid] = null;
+router.delete('/:businessid', async function (req, res, next) {
+  const businessid = new ObjectId(req.params.businessid);
+  const updated_business = await getCollection('businesses').deleteOne({_id: businessid});
+
+  if (updated_business.deleteCount > 0) {
     res.status(204).end();
   } else {
     next();

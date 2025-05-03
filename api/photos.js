@@ -1,7 +1,8 @@
 const router = require('express').Router();
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
 
-const photos = require('../data/photos');
+// const photos = require('../data/photos');
+const { getCollection, ObjectId } = require('../lib/mongo');
 
 exports.router = router;
 exports.photos = photos;
@@ -19,13 +20,14 @@ const photoSchema = {
 /*
  * Route to create a new photo.
  */
-router.post('/', function (req, res, next) {
+router.post('/', async function (req, res, next) {
   if (validateAgainstSchema(req.body, photoSchema)) {
+    const photos = await getCollection('photos').find().toArray();
     const photo = extractValidFields(req.body, photoSchema);
     photo.id = photos.length;
-    photos.push(photo);
+    const updated_photos = await getCollection('photos').insertOne(photo);
     res.status(201).json({
-      id: photo.id,
+      id: photo.id, // go back and get it from db instead for all of these?
       links: {
         photo: `/photos/${photo.id}`,
         business: `/businesses/${photo.businessid}`
@@ -41,10 +43,12 @@ router.post('/', function (req, res, next) {
 /*
  * Route to fetch info about a specific photo.
  */
-router.get('/:photoID', function (req, res, next) {
-  const photoID = parseInt(req.params.photoID);
-  if (photos[photoID]) {
-    res.status(200).json(photos[photoID]);
+router.get('/:photoID', async function (req, res, next) {
+  const photoID = new ObjectId(req.params.photoID);
+  const photo = await getCollection('photos').findOne({_id: photoID});
+
+  if (photo) {
+    res.status(200).json(photo);
   } else {
     next();
   }
@@ -53,23 +57,23 @@ router.get('/:photoID', function (req, res, next) {
 /*
  * Route to update a photo.
  */
-router.put('/:photoID', function (req, res, next) {
-  const photoID = parseInt(req.params.photoID);
-  if (photos[photoID]) {
+router.put('/:photoID', async function (req, res, next) {
+  const photoID = new ObjectId(req.params.photoID);
 
-    if (validateAgainstSchema(req.body, photoSchema)) {
+  if (validateAgainstSchema(req.body, photoSchema)) {
       /*
        * Make sure the updated photo has the same businessid and userid as
        * the existing photo.
        */
-      const updatedPhoto = extractValidFields(req.body, photoSchema);
-      const existingPhoto = photos[photoID];
+    const updatedPhoto = extractValidFields(req.body, photoSchema);
+    const existingPhoto = await getCollection('photos').findOne({_id: photoID}).toArray();
       if (existingPhoto && updatedPhoto.businessid === existingPhoto.businessid && updatedPhoto.userid === existingPhoto.userid) {
-        photos[photoID] = updatedPhoto;
-        photos[photoID].id = photoID;
+        // photos[photoID] = updatedPhoto;
+        // photos[photoID].id = photoID;
+        updated_photos = await getCollection('photos').replesOne({_id: photoID}, updatedPhoto);
         res.status(200).json({
           links: {
-            photo: `/photos/${photoID}`,
+            photo: `/photos/${photoID}`, // TODO?
             business: `/businesses/${updatedPhoto.businessid}`
           }
         });
@@ -84,9 +88,9 @@ router.put('/:photoID', function (req, res, next) {
       });
     }
 
-  } else {
-    next();
-  }
+  // } else {
+  //   next();
+  // }
 });
 
 /*

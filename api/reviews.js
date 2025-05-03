@@ -1,7 +1,8 @@
 const router = require('express').Router();
 const { validateAgainstSchema, extractValidFields } = require('../lib/validation');
 
-const reviews = require('../data/reviews');
+// const reviews = require('../data/reviews');
+const { getCollection, ObjectId } = require('../lib/mongo');
 
 exports.router = router;
 exports.reviews = reviews;
