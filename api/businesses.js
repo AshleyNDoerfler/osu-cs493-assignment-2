@@ -7,7 +7,7 @@ const { validateAgainstSchema, extractValidFields } = require('../lib/validation
 const { getCollection, ObjectId } = require('../lib/mongo');
 
 exports.router = router;
-exports.businesses = businesses;
+// exports.businesses = businesses;
 
 /*
  * Schema describing required/optional fields of a business object.

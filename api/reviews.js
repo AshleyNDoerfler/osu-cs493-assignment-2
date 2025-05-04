@@ -5,7 +5,7 @@ const { validateAgainstSchema, extractValidFields } = require('../lib/validation
 const { getCollection, ObjectId } = require('../lib/mongo');
 
 exports.router = router;
-exports.reviews = reviews;
+// exports.reviews = reviews;
 
 /*
  * Schema describing required/optional fields of a review object.
@@ -22,27 +22,24 @@ const reviewSchema = {
 /*
  * Route to create a new review.
  */
-router.post('/', function (req, res, next) {
+router.post('/', async function (req, res, next) {
   if (validateAgainstSchema(req.body, reviewSchema)) {
 
     const review = extractValidFields(req.body, reviewSchema);
+    const reviews = await getCollection('reviews').toArray();
 
-    /*
-     * Make sure the user is not trying to review the same business twice.
-     */
-    const userReviewedThisBusinessAlready = reviews.some(
-      existingReview => existingReview
-        && existingReview.ownerid === review.ownerid
-        && existingReview.businessid === review.businessid
-    );
+    const duplicate = await getCollection.findOne({
+      userid: review.userid,
+      businessid: review.businessid
+    });
 
-    if (userReviewedThisBusinessAlready) {
+    if (duplicate) {
       res.status(403).json({
         error: "User has already posted a review of this business"
       });
     } else {
       review.id = reviews.length;
-      reviews.push(review);
+      const updated_reviews = await getCollection.insertOne(review);
       res.status(201).json({
         id: review.id,
         links: {
@@ -62,10 +59,12 @@ router.post('/', function (req, res, next) {
 /*
  * Route to fetch info about a specific review.
  */
-router.get('/:reviewID', function (req, res, next) {
-  const reviewID = parseInt(req.params.reviewID);
-  if (reviews[reviewID]) {
-    res.status(200).json(reviews[reviewID]);
+router.get('/:reviewID', async function (req, res, next) {
+  const reviewID = new ObjectId(req.params.reviewID);
+  const review = await getCollection('reviews').findOne({_id: reviewID}).toArray();
+
+  if (review) {
+    res.status(200).json(review);
   } else {
     next();
   }
@@ -74,9 +73,10 @@ router.get('/:reviewID', function (req, res, next) {
 /*
  * Route to update a review.
  */
-router.put('/:reviewID', function (req, res, next) {
-  const reviewID = parseInt(req.params.reviewID);
-  if (reviews[reviewID]) {
+router.put('/:reviewID', async function (req, res, next) {
+  const reviewID = new ObjectId(req.params.reviewID);
+  const existingReview = await getCollection('reviews').findOne({_id: reviewID}).toArray();
+  if (existingReview) {
 
     if (validateAgainstSchema(req.body, reviewSchema)) {
       /*
@@ -84,10 +84,9 @@ router.put('/:reviewID', function (req, res, next) {
        * the existing review.
        */
       let updatedReview = extractValidFields(req.body, reviewSchema);
-      let existingReview = reviews[reviewID];
+      const newReview = await getCollection('reviews').replaceOne({_id: reviewID}, updatedReview);
       if (updatedReview.businessid === existingReview.businessid && updatedReview.userid === existingReview.userid) {
-        reviews[reviewID] = updatedReview;
-        reviews[reviewID].id = reviewID;
+        
         res.status(200).json({
           links: {
             review: `/reviews/${reviewID}`,
@@ -113,10 +112,11 @@ router.put('/:reviewID', function (req, res, next) {
 /*
  * Route to delete a review.
  */
-router.delete('/:reviewID', function (req, res, next) {
-  const reviewID = parseInt(req.params.reviewID);
-  if (reviews[reviewID]) {
-    reviews[reviewID] = null;
+router.delete('/:reviewID', async function (req, res, next) {
+  const reviewID = new ObjectId(req.params.reviewID);
+  const review = await getCollection('reviews').findOne({_id: reviewID});
+  if (review) {
+    const updated_reviews = await getCollection('reviews').deleteOne({_id: reviewID});
     res.status(204).end();
   } else {
     next();

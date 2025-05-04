@@ -5,7 +5,7 @@ const { validateAgainstSchema, extractValidFields } = require('../lib/validation
 const { getCollection, ObjectId } = require('../lib/mongo');
 
 exports.router = router;
-exports.photos = photos;
+// exports.photos = photos;
 
 /*
  * Schema describing required/optional fields of a photo object.
@@ -70,7 +70,7 @@ router.put('/:photoID', async function (req, res, next) {
       if (existingPhoto && updatedPhoto.businessid === existingPhoto.businessid && updatedPhoto.userid === existingPhoto.userid) {
         // photos[photoID] = updatedPhoto;
         // photos[photoID].id = photoID;
-        updated_photos = await getCollection('photos').replesOne({_id: photoID}, updatedPhoto);
+        updated_photos = await getCollection('photos').replaceOne({_id: photoID}, updatedPhoto);
         res.status(200).json({
           links: {
             photo: `/photos/${photoID}`, // TODO?
@@ -96,10 +96,11 @@ router.put('/:photoID', async function (req, res, next) {
 /*
  * Route to delete a photo.
  */
-router.delete('/:photoID', function (req, res, next) {
-  const photoID = parseInt(req.params.photoID);
-  if (photos[photoID]) {
-    photos[photoID] = null;
+router.delete('/:photoID', async function (req, res, next) {
+  const photoID = new ObjectID(req.params.photoID);
+  const updated_photos = await getCollection('photos').deleteOne({_id: photoID})
+
+  if (updated_photos.deleteCount > 0) {
     res.status(204).end();
   } else {
     next();
