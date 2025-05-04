@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: api-server
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - MONGO_HOST=mongodb
+      - MONGO_PORT=27017
+      - MONGO_PASSWORD=hunter2
+      - MONGO_DB_NAME=storedb
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:6
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=suser
+      - MONGO_INITDB_ROOT_PASSWORD=hunter2
+      - MONGO_INITDB_DATABASE=storedb
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
