@@ -21,7 +21,7 @@ router.get('/:userid/businesses', async function (req, res) {
 /*
  * Route to list all of a user's reviews.
  */
-router.get('/:userid/reviews', function (req, res) {
+router.get('/:userid/reviews', async function (req, res) {
   const userid = parseInt(req.params.userid);
   const userReviews = await getCollection('reviews').find({userid:userid}).toArray();
   res.status(200).json({
