@@ -3,7 +3,7 @@ version: '3.8'
 services:
   api:
     build: .
-    container_name: api-server
+    container_name: mongo-server
     ports:
       - "8000:8000"
     environment:
@@ -14,7 +14,11 @@ services:
       - MONGO_DB_NAME=storedb
     depends_on:
       - mongodb
+    working_dir: /osu-cs493-assignment-2
+    command: ["node", "server.js"]
     restart: unless-stopped
+    volumes:
+      - .:/osu-cs493-assignment-2
 
   mongodb:
     image: mongo:6

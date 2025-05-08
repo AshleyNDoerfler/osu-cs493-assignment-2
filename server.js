@@ -1,5 +1,6 @@
 const express = require('express');
 const morgan = require('morgan');
+const { connect_to_DB } = require('./lib/mongo');
 
 const api = require('./api');
 
@@ -38,6 +39,15 @@ app.use('*', function (err, req, res, next) {
   })
 })
 
-app.listen(port, function() {
-  console.log("== Server is running on port", port);
+// app.listen(port, function() {
+//   console.log("== Server is running on port", port);
+// });
+
+connect_to_DB().then(() => {
+  app.listen(port, function () {
+    console.log("== Server is running on port", port);
+  });
+}).catch(err => {
+  console.error("Failed to connect to DB:", err);
+  process.exit(1); 
 });
