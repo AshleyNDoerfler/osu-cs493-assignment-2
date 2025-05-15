@@ -18,14 +18,6 @@ const reviewSchema = {
   review: { required: false }
 };
 
-function parseObjectId(id) {
-  try {
-    return new ObjectId(id);
-  } catch (e) {
-    return null;
-  }
-}
-
 
 /*
  * Route to create a new review.
@@ -73,7 +65,7 @@ router.post('/', async function (req, res, next) {
  */
 router.get('/:reviewID', async function (req, res, next) {
   try{
-    const reviewID = parseObjectId(req.params.reviewID);
+    const reviewID = req.params.reviewID;
 
     if(!reviewID){
       return res.status(400).json({ error: "Invalid review ID." });
@@ -98,7 +90,7 @@ router.get('/:reviewID', async function (req, res, next) {
  */
 router.put('/:reviewID', async function (req, res, next) {
   try{
-    const reviewID = parseObjectId(req.params.reviewID);
+    const reviewID = req.params.reviewID;
     const collection = await getCollection('reviews');
     const existingReview = await collection.findOne({_id: reviewID}).toArray();
     if (existingReview) {
@@ -142,7 +134,7 @@ router.put('/:reviewID', async function (req, res, next) {
  */
 router.delete('/:reviewID', async function (req, res, next) {
   try{
-    const reviewID = new ObjectId(req.params.reviewID);
+    const reviewID = req.params.reviewID;
     const review = await getCollection('reviews').findOne({_id: reviewID});
     if (review) {
       const updated_reviews = await getCollection('reviews').deleteOne({_id: reviewID});

@@ -26,14 +26,6 @@ const businessSchema = {
   email: { required: false }
 };
 
-function parseObjectId(id) {
-  try {
-    return new ObjectId(id);
-  } catch (e) {
-    return null;
-  }
-}
-
 /*
  * Route to return a list of businesses.
  */
@@ -122,7 +114,7 @@ router.post('/', async function (req, res, next) {
  */
 router.get('/:businessid', async function (req, res, next) {
   try {
-    const businessid = parseObjectId(req.params.businessid);
+    const businessid = req.params.businessid;
     if (!businessid) {
       return res.status(400).json({ error: "Invalid business ID." });
     }
@@ -145,7 +137,7 @@ router.get('/:businessid', async function (req, res, next) {
  */
 router.put('/:businessid', async function (req, res, next) {
   try {
-    const businessid = parseObjectId(req.params.businessid);
+    const businessid = req.params.businessid;
     if (!businessid) {
       return res.status(400).json({ error: "Invalid business ID." });
     }
@@ -175,7 +167,7 @@ router.put('/:businessid', async function (req, res, next) {
  */
 router.delete('/:businessid', async function (req, res, next) {
   try {
-    const businessid = parseObjectId(req.params.businessid);
+    const businessid = req.params.businessid;
     if (!businessid) {
       return res.status(400).json({ error: "Invalid business ID." });
     }

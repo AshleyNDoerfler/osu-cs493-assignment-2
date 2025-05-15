@@ -16,15 +16,6 @@ const photoSchema = {
   caption: { required: false }
 };
 
-function parseObjectId(id) {
-  try {
-    return new ObjectId(id);
-  } catch (e) {
-    return null;
-  }
-}
-
-
 /*
  * Route to create a new photo.
  */
@@ -58,7 +49,7 @@ router.post('/', async function (req, res, next) {
  */
 router.get('/:photoID', async function (req, res, next) {
   try{
-    const photoID = parseObjectId(req.params.photoID);
+    const photoID = req.params.photoID;
     if (!photoID){
       return res.status(400).json({ error: "Invalid photo ID."});
     }
@@ -81,7 +72,7 @@ router.get('/:photoID', async function (req, res, next) {
  */
 router.put('/:photoID', async function (req, res, next) {
   try{
-    const photoID = parseObjectId(req.params.photoID);
+    const photoID = req.params.photoID;
 
     if (validateAgainstSchema(req.body, photoSchema)) {
         /*
@@ -121,7 +112,7 @@ router.put('/:photoID', async function (req, res, next) {
  */
 router.delete('/:photoID', async function (req, res, next) {
   try{
-    const photoID = parseObjectId(req.params.photoID);
+    const photoID = req.params.photoID;
     if (!photoID) {
       return res.status(400).json({ error: "Invalid photo ID." });
     }
