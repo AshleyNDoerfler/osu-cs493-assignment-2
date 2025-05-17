@@ -16,6 +16,7 @@ const photoSchema = {
   caption: { required: false }
 };
 
+
 /*
  * Route to create a new photo.
  */
@@ -27,8 +28,10 @@ router.post('/', async function (req, res, next) {
   
       const updated_photos = await collection.insertOne(photo);
 
+      const id = (collection.toArray()).length;
+
       res.status(201).json({
-        id: updated_photos.insertedId, // go back and get it from db instead for all of these?
+        id: updated_photos.id, // go back and get it from db instead for all of these?
         links: {
           photo: `/photos/${updated_photos.insertedId}`,
           business: `/businesses/${photo.businessid}`
@@ -55,7 +58,7 @@ router.get('/:photoID', async function (req, res, next) {
     }
 
     const collection = await getCollection('photos');
-    const photo = await collection.findOne({_id: photoID});
+    const photo = await collection.findOne({id: photoID});
 
     if (photo) {
       res.status(200).json(photo);
@@ -81,11 +84,11 @@ router.put('/:photoID', async function (req, res, next) {
         */
       const updatedPhoto = extractValidFields(req.body, photoSchema);
       const collection = await getCollection('photos');
-      const existingPhoto = await collection.findOne({_id: photoID}).toArray();
+      const existingPhoto = await collection.findOne({id: photoID}).toArray();
         if (existingPhoto && updatedPhoto.businessid === existingPhoto.businessid && updatedPhoto.userid === existingPhoto.userid) {
           // photos[photoID] = updatedPhoto;
           // photos[photoID].id = photoID;
-          const updated_photos = await collection.replaceOne({_id: photoID}, updatedPhoto);
+          const updated_photos = await collection.replaceOne({id: photoID}, updatedPhoto);
           res.status(200).json({
             links: {
               photo: `/photos/${updated_photos.insertedId}`,
@@ -116,7 +119,7 @@ router.delete('/:photoID', async function (req, res, next) {
     if (!photoID) {
       return res.status(400).json({ error: "Invalid photo ID." });
     }
-    const updated_photos = await getCollection('photos').deleteOne({_id: photoID})
+    const updated_photos = await getCollection('photos').deleteOne({id: photoID})
 
     if (updated_photos.deleteCount > 0) {
       res.status(204).end();

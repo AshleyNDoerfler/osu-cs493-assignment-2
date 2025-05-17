@@ -72,7 +72,7 @@ router.get('/:reviewID', async function (req, res, next) {
     }
 
     const collection = await getCollection('reviews');
-    const review = await collection.findOne({_id: reviewID}).toArray();
+    const review = await collection.findOne({id: reviewID}).toArray();
 
     if (review) {
       res.status(200).json(review);
@@ -92,7 +92,7 @@ router.put('/:reviewID', async function (req, res, next) {
   try{
     const reviewID = req.params.reviewID;
     const collection = await getCollection('reviews');
-    const existingReview = await collection.findOne({_id: reviewID}).toArray();
+    const existingReview = await collection.findOne({id: reviewID}).toArray();
     if (existingReview) {
 
       if (validateAgainstSchema(req.body, reviewSchema)) {
@@ -101,7 +101,7 @@ router.put('/:reviewID', async function (req, res, next) {
         * the existing review.
         */
         let updatedReview = extractValidFields(req.body, reviewSchema);
-        const newReview = await collection.replaceOne({_id: reviewID}, updatedReview);
+        const newReview = await collection.replaceOne({id: reviewID}, updatedReview);
         if (updatedReview.businessid === existingReview.businessid && updatedReview.userid === existingReview.userid) {
           
           res.status(200).json({
@@ -135,9 +135,9 @@ router.put('/:reviewID', async function (req, res, next) {
 router.delete('/:reviewID', async function (req, res, next) {
   try{
     const reviewID = req.params.reviewID;
-    const review = await getCollection('reviews').findOne({_id: reviewID});
+    const review = await getCollection('reviews').findOne({id: reviewID});
     if (review) {
-      const updated_reviews = await getCollection('reviews').deleteOne({_id: reviewID});
+      const updated_reviews = await getCollection('reviews').deleteOne({id: reviewID});
       res.status(204).end();
     } else {
       next();

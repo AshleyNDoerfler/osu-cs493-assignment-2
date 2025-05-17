@@ -93,3 +93,66 @@ curl -s -X POST "$API_URL/photos" -H "Content-Type: application/json" -d "{
 }" > /dev/null
 
 echo "Seeding complete!"
+
+#!/bin/bash
+
+API_URL="http://localhost:8000"
+
+# --- Test GET all businesses
+echo "Testing: GET /businesses"
+curl -s "$API_URL/businesses?page=1" | jq .
+
+# --- Test GET business by ID
+echo "Testing: GET /businesses/1"
+curl -s "$API_URL/businesses/1" | jq .
+
+# --- Test PUT update business
+echo "Testing: PUT /businesses/1"
+curl -s -X PUT "$API_URL/businesses/1" -H "Content-Type: application/json" -d '{
+  "name": "Updated Business Name"
+}' | jq .
+
+# --- Test DELETE business
+echo "Testing: DELETE /businesses/1"
+curl -s -X DELETE "$API_URL/businesses/1" | jq .
+
+# --- Test GET reviews by ID
+echo "Testing: GET /reviews/1"
+curl -s "$API_URL/reviews/1" | jq .
+
+# --- Test PUT review
+echo "Testing: PUT /reviews/1"
+curl -s -X PUT "$API_URL/reviews/1" -H "Content-Type: application/json" -d '{
+  "stars": 5
+}' | jq .
+
+# --- Test DELETE review
+echo "Testing: DELETE /reviews/1"
+curl -s -X DELETE "$API_URL/reviews/1" | jq .
+
+# --- Test GET photo by ID
+echo "Testing: GET /photos/1"
+curl -s "$API_URL/photos/1" | jq .
+
+# --- Test PUT photo
+echo "Testing: PUT /photos/1"
+curl -s -X PUT "$API_URL/photos/1" -H "Content-Type: application/json" -d '{
+  "caption": "Updated caption!"
+}' | jq .
+
+# --- Test DELETE photo
+echo "Testing: DELETE /photos/1"
+curl -s -X DELETE "$API_URL/photos/1" | jq .
+
+# --- Test user endpoints
+echo "Testing: GET /users/0/businesses"
+curl -s "$API_URL/users/0/businesses" | jq .
+
+echo "Testing: GET /users/21/reviews"
+curl -s "$API_URL/users/21/reviews" | jq .
+
+echo "Testing: GET /users/21/photos"
+curl -s "$API_URL/users/21/photos" | jq .
+
+echo "All API endpoint tests finished."
+

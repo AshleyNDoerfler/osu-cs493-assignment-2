@@ -4,7 +4,7 @@ const { validateAgainstSchema, extractValidFields } = require('../lib/validation
 // const businesses = require('../data/businesses');
 // const { reviews } = require('./reviews');
 // const { photos } = require('./photos');
-const { getCollection, ObjectId } = require('../lib/mongo');
+const { getCollection } = require('../lib/mongo');
 
 exports.router = router;
 // exports.businesses = businesses;
@@ -25,6 +25,8 @@ const businessSchema = {
   website: { required: false },
   email: { required: false }
 };
+
+let iterId = 0;
 
 /*
  * Route to return a list of businesses.
@@ -93,8 +95,10 @@ router.post('/', async function (req, res, next) {
       const collection = await getCollection('businesses');
       const result = await collection.insertOne(business);
 
+      const id = (collection.toArray()).length + 1;
+
       res.status(201).json({
-        id: result.insertedId,
+        id: result.id,
         links: {
           business: `/businesses/${result.insertedId}`
         }
@@ -120,7 +124,7 @@ router.get('/:businessid', async function (req, res, next) {
     }
 
     const collection = await getCollection('businesses');
-    const business = await collection.findOne({ _id: businessid });
+    const business = await collection.findOne({ id: businessid });
 
     if (business) {
       res.status(200).json(business);
@@ -145,7 +149,7 @@ router.put('/:businessid', async function (req, res, next) {
     if (validateAgainstSchema(req.body, businessSchema)) {
       const business = extractValidFields(req.body, businessSchema);
       const collection = await getCollection('businesses');
-      const result = await collection.replaceOne({ _id: businessid }, business);
+      const result = await collection.replaceOne({ id: businessid }, business);
 
       if (result.matchedCount > 0) {
         res.status(200).json({
@@ -173,7 +177,7 @@ router.delete('/:businessid', async function (req, res, next) {
     }
 
     const collection = await getCollection('businesses');
-    const result = await collection.deleteOne({ _id: businessid });
+    const result = await collection.deleteOne({ id: businessid });
 
     if (result.deletedCount > 0) {
       res.status(204).end();
